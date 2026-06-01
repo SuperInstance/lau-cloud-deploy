@@ -1,0 +1,95 @@
+# =============================================================================
+# Deployment — LAU Stack application
+# Adjusts based on TARGET_PLATFORM config — GPU or CPU mode
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lau-stack
+  namespace: lau-stack
+  labels:
+    app.kubernetes.io/name: lau-stack
+    app.kubernetes.io/component: server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lau-stack
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lau-stack
+        app.kubernetes.io/component: server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      # Runtime class for GPU nodes (set to nvidia for GPU, omit for CPU)
+      # runtimeClassName: nvidia
+
+      containers:
+        - name: lau-server
+          image: lau-stack:latest  # Replace with actual registry
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: lau-hardware-profiles
+            - secretRef:
+                name: lau-secrets
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: config
+              mountPath: /etc/lau
+              readOnly: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
+          # Uncomment for GPU deployments:
+          # limits:
+          #   nvidia.com/gpu: "1"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: lau-hardware-profiles
+      terminationGracePeriodSeconds: 30

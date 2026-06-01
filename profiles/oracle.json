@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Oracle Cloud Infrastructure Shapes",
+  "description": "Hardware profiles for OCI compute instances used by the SuperInstance/LAU stack",
+  "profiles": {
+    "VM.Standard.E4.Flex": {
+      "architecture": "x86_64",
+      "processor": "AMD EPYC 7763 (Milan)",
+      "ocpuRange": { "min": 1, "max": 64 },
+      "memoryPerOCPU_GB": 64,
+      "memoryRange_GB": { "min": 1, "max": 1024 },
+      "networkBandwidth_Gbps": "up to 50",
+      "gpu": false,
+      "localDisk": false,
+      "freeTier": false,
+      "bestFor": "General-purpose compute, Go services, Chapel compilation, API backends",
+      "notes": "Flex shape allows granular OCPU/memory allocation. Best price-performance for x86 workloads."
+    },
+    "VM.Standard3.Flex": {
+      "architecture": "x86_64",
+      "processor": "Intel Xeon Platinum 8358 (Ice Lake)",
+      "ocpuRange": { "min": 1, "max": 32 },
+      "memoryPerOCPU_GB": 64,
+      "memoryRange_GB": { "min": 1, "max": 512 },
+      "networkBandwidth_Gbps": "up to 24",
+      "gpu": false,
+      "localDisk": false,
+      "freeTier": false,
+      "bestFor": "Intel-specific workloads, AVX-512 optimized builds",
+      "notes": "Use when Intel-specific instructions (AVX-512, VNNI) provide measurable benefit over AMD."
+    },
+    "BM.Standard.E4.128": {
+      "architecture": "x86_64",
+      "processor": "AMD EPYC 7763 (Milan)",
+      "ocpuCount": 128,
+      "memory_GB": 2048,
+      "networkBandwidth_Gbps": 100,
+      "gpu": false,
+      "localDisk": true,
+      "localDiskType": "NVMe",
+      "localDiskCapacity_TB": 25.6,
+      "freeTier": false,
+      "bestFor": "High-performance bare-metal compute, large-scale simulation, batch processing",
+      "notes": "Bare metal — no noisy neighbors. Ideal for benchmark baseline. Requires Oracle Cloud bare-metal provisioning."
+    },
+    "A1.Flex": {
+      "architecture": "arm64",
+      "processor": "Ampere Altra Q80-33 (ARM Neoverse N1)",
+      "ocpuRange": { "min": 1, "max": 80 },
+      "memoryPerOCPU_GB": 12,
+      "memoryRange_GB": { "min": 1, "max": 512 },
+      "networkBandwidth_Gbps": "up to 40",
+      "gpu": false,
+      "localDisk": false,
+      "freeTier": true,
+      "freeTierLimits": {
+        "ocpu": 4,
+        "memory_GB": 24,
+        "instances": 4,
+        "totalStorage_TB": 200
+      },
+      "bestFor": "Always-free ARM compute, edge gateway, CI/CD runners, cost-optimized workloads",
+      "notes": "The crown jewel of OCI free tier. 4 ARM OCPUs + 24GB RAM for free. Excellent for Go + C cross-compilation. Use Dockerfile.cpu for this target."
+    },
+    "VM.GPU.A10.1": {
+      "architecture": "x86_64",
+      "processor": "AMD EPYC 7763",
+      "ocpuCount": 15,
+      "memory_GB": 240,
+      "gpu": true,
+      "gpuType": "NVIDIA A10",
+      "gpuCount": 1,
+      "gpuMemory_GB": 24,
+      "networkBandwidth_Gbps": 25,
+      "freeTier": false,
+      "bestFor": "GPU-accelerated inference, CUDA development, ML workloads",
+      "notes": "Single A10 GPU — good middle ground between cost and GPU capability."
+    },
+    "BM.GPU4.8": {
+      "architecture": "x86_64",
+      "processor": "AMD EPYC 7763",
+      "ocpuCount": 64,
+      "memory_GB": 2048,
+      "gpu": true,
+      "gpuType": "NVIDIA A100",
+      "gpuCount": 8,
+      "gpuMemory_GB": 320,
+      "networkBandwidth_Gbps": 100,
+      "freeTier": false,
+      "bestFor": "Maximum GPU compute, large-scale training, massive parallel simulation",
+      "notes": "8x A100 (40GB each). Serious hardware for serious workloads."
+    }
+  },
+  "regions": {
+    "preferred": ["us-ashburn-1", "us-phoenix-1", "eu-frankfurt-1"],
+    "freeTierAvailable": "All regions support A1.Flex free tier, subject to capacity"
+  }
+}

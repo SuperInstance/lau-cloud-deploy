@@ -1,0 +1,36 @@
+# =============================================================================
+# OCI Load Balancer Service — Oracle Cloud specific ingress
+# Uses OCI Cloud Provider LoadBalancer
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: lau-stack-lb
+  namespace: lau-stack
+  annotations:
+    # OCI-specific annotations
+    oci.oraclecloud.com/load-balancer-type: "lb"
+    service.beta.kubernetes.io/oci-load-balancer-internal: "false"
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "100"
+    # Optional: specify subnet OCIDs
+    # service.beta.kubernetes.io/oci-load-balancer-subnet1: "ocid1.subnet.oc1.."
+    # Network security groups
+    # service.beta.kubernetes.io/oci-network-security-groups: "ocid1.networksecuritygroup.oc1.."
+  labels:
+    app.kubernetes.io/name: lau-stack
+    app.kubernetes.io/component: loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: lau-stack
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: http
+      protocol: TCP

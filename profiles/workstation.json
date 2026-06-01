@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Workstation Hardware Profile",
+  "description": "Local development and primary compute workstation for the SuperInstance/LAU stack",
+  "profile": {
+    "hostname": "workstation",
+    "architecture": "x86_64",
+    "cpu": {
+      "model": "AMD Ryzen AI 9 HX 370",
+      "codename": "Strix Point",
+      "cores": 12,
+      "threads": 24,
+      "baseClock_GHz": 2.0,
+      "boostClock_GHz": 5.1,
+      "cache": {
+        "l1_KB": { "instruction": 640, "data": 640 },
+        "l2_MB": 12,
+        "l3_MB": 36,
+        "l4_MB": null
+      },
+      "simd": ["SSE4.2", "AVX", "AVX2", "AVX-512 (specific subsets: VNNI, BF16)"],
+      "tdp_W": 54,
+      "cTDP_W": { "min": 15, "max": 54 },
+      "integratedGPU": "AMD Radeon 890M (RDNA 3.5, 16 CUs)",
+      "npu": "AMD XDNA 2 NPU (50 TOPS INT8)",
+      "notes": "Hybrid architecture: 4x Zen 5 + 8x Zen 5c. AVX-512 support is partial — check specific intrinsics."
+    },
+    "discreteGPU": {
+      "model": "NVIDIA GeForce RTX 4050 Laptop",
+      "architecture": "Ada Lovelace",
+      "cudaCores": 2560,
+      "tensorCores": 80,
+      "rtCores": 20,
+      "vram_GB": 6,
+      "vramType": "GDDR6",
+      "memoryBandwidth_GBps": 192,
+      "boostClock_MHz": 2370,
+      "tdp_W": { "min": 35, "max": 115 },
+      "computeCapability": "8.9",
+      "cudaVersion": "12.5",
+      "driverVersion": "550+",
+      "displayOutputs": ["HDMI 2.1", "USB-C (DP 1.4a)"],
+      "notes": "Mobile RTX 4050 — 6GB VRAM is the primary constraint. Use mixed precision and gradient checkpointing for training."
+    },
+    "memory": {
+      "total_GB": 32,
+      "type": "LPDDR5X",
+      "speed_MTps": 7500,
+      "channels": 4,
+      "ecc": false,
+      "notes": "Soldered — not upgradeable. Shared with integrated GPU (UMA)."
+    },
+    "storage": {
+      "primary": {
+        "type": "NVMe M.2 PCIe Gen 4",
+        "capacity_GB": 1024,
+        "sequentialRead_MBps": 7000,
+        "sequentialWrite_MBps": 5000
+      },
+      "notes": "Single M.2 slot. External storage recommended for datasets."
+    },
+    "network": {
+      "wifi": "Wi-Fi 7 (802.11be)",
+      "bluetooth": "5.4",
+      "ethernet": "None built-in (USB-C dongle required)",
+      "notes": "Wi-Fi 7 provides excellent throughput. For sustained transfers, use USB-C ethernet adapter."
+    },
+    "software": {
+      "os": "Linux (WSL2 on Windows 11)",
+      "kernel": "6.6.x Microsoft-standard-WSL2",
+      "cuda": "12.5",
+      "gcc": "13+",
+      "go": "1.22+",
+      "chapel": "2.x",
+      "docker": "24+ with NVIDIA Container Toolkit",
+      "kubernetes": "minikube or k3s for local testing"
+    },
+    "performanceProfile": {
+      "singleThread_GB_v2_baseline": "~85",
+      "multiThread_GB_v2_baseline": "~750",
+      "cudaBandwidthTest_H2D_GBps": "~12",
+      "cudaBandwidthTest_D2H_GBps": "~12",
+      "nvmeRead_IOPS_4k": "~500000",
+      "notes": "Approximate benchmarks. Run scripts/benchmark.sh for actual measurements."
+    },
+    "deploymentRole": "Primary development machine. Local testing, cross-compilation source, Docker image builds. NOT a production deployment target."
+  }
+}

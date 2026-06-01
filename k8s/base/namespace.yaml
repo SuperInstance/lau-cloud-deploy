@@ -1,0 +1,12 @@
+# =============================================================================
+# Kubernetes Base Manifests
+# Namespace, ConfigMap, Secret, Deployment, Service, HPA
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lau-stack
+  labels:
+    app.kubernetes.io/name: lau-stack
+    app.kubernetes.io/part-of: superinstance
+    app.kubernetes.io/managed-by: kubectl

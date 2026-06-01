@@ -1,0 +1,81 @@
+# =============================================================================
+# Dockerfile.edge — Minimal edge build for NVIDIA Jetson (ARM64 + CUDA)
+# Target: Jetson Nano / Orin Nano / Orin NX / AGX Orin
+# NO Go runtime, NO Chapel — just the C compute library + minimal wrapper
+# =============================================================================
+# Build (on Jetson):  docker build -f docker/Dockerfile.edge -t lau-stack:edge .
+# Run:                docker run --runtime nvidia lau-stack:edge
+# Cross-compile:      docker buildx build --platform linux/arm64 -f docker/Dockerfile.edge -t lau-stack:edge .
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Jetson-specific CUDA build
+# Use L4T base image which includes CUDA + GPU drivers for Jetson
+# Adjust tag to match your JetPack version:
+#   JetPack 5.1.x → r35.4.1
+#   JetPack 4.6.x → r32.7.1 (Jetson Nano)
+# ---------------------------------------------------------------------------
+FROM nvcr.io/nvidia/l4t:r35.4.1 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build C compute library with Jetson CUDA
+WORKDIR /build/c-lib
+COPY src/c/ ./
+
+# Detect GPU arch from environment or default to sm_87 (Orin)
+ARG CUDA_ARCH=sm_87
+RUN make clean && make -j$(nproc) \
+    CC=gcc \
+    CFLAGS="-O3 -march=armv8.2-a+crypto+simd -Wall -Wextra" \
+    CUDA_ARCH="${CUDA_ARCH}" \
+    EDGE_MODE=1
+
+# Build minimal edge server (pure C)
+RUN if [ -f Makefile.edge ]; then \
+        make -f Makefile.edge -j$(nproc) -C . ; \
+    fi
+
+# ---------------------------------------------------------------------------
+# Stage 2: Minimal Jetson runtime
+# ---------------------------------------------------------------------------
+FROM nvcr.io/nvidia/l4t:r35.4.1 AS runtime
+
+LABEL maintainer="SuperInstance"
+LABEL org.opencontainers.image.title="LAU Stack (Edge)"
+LABEL org.opencontainers.image.description="Minimal edge compute stack for NVIDIA Jetson — C + CUDA only"
+
+# Minimal dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libgomp1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r lau && useradd -r -g lau -m -s /sbin/nologin lau
+
+# Copy compute library and edge binary
+COPY --from=builder /build/c-lib/libcompute.so /usr/local/lib/
+COPY --from=builder /build/c-lib/lau-edge /usr/local/bin/ 2>/dev/null || true
+
+RUN ldconfig
+
+COPY config/ /etc/lau/
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+USER lau
+WORKDIR /home/lau
+
+# Edge binary if available, otherwise just the library
+ENTRYPOINT ["/bin/sh", "-c", \
+    "if [ -x /usr/local/bin/lau-edge ]; then exec /usr/local/bin/lau-edge --config /etc/lau/config.yaml; else echo 'No edge binary — library mode only' && sleep infinity; fi"]

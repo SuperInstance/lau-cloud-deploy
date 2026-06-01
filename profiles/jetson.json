@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NVIDIA Jetson Hardware Profiles",
+  "description": "Edge deployment profiles for NVIDIA Jetson family — GPU-accelerated ARM64 edge devices",
+  "profiles": {
+    "jetson-nano": {
+      "model": "NVIDIA Jetson Nano (B01)",
+      "codename": "Nano",
+      "architecture": "arm64 (aarch64)",
+      "processor": "Quad-core ARM Cortex-A57",
+      "cpuClock_GHz": 1.43,
+      "memory_GB": 4,
+      "memoryType": "LPDDR4",
+      "gpu": "Maxwell (128 CUDA cores)",
+      "gpuClock_MHz": 921,
+      "gpuComputeCapability": "5.3",
+      "storage": "microSD",
+      "connectivity": ["Gigabit Ethernet", "USB 3.0", "MIPI CSI-2 (x1)"],
+      "powerModes": {
+        "5W": { "cpuCores": 2, "cpuClock_GHz": 0.9, "gpuClock_MHz": 640, "typicalPower_W": 5 },
+        "10W": { "cpuCores": 4, "cpuClock_GHz": 1.43, "gpuClock_MHz": 921, "typicalPower_W": 10 }
+      },
+      "thermalConstraints": {
+        "maxOperatingTemp_C": 50,
+        "passiveCooling": true,
+        "recommendedHeatsink": true,
+        "throttleTemp_C": 47,
+        "shutdownTemp_C": 55
+      },
+      "cudaVersion": "10.2",
+      "jetpackVersion": "4.6",
+      "dockerBaseImage": "nvcr.io/nvidia/l4t:r32.7.1",
+      "bestFor": "Prototyping, lightweight inference, sensor processing",
+      "limitations": "Maxwell GPU — no Tensor Cores, limited CUDA 10.2. Not suitable for heavy training."
+    },
+    "jetson-orin-nano": {
+      "model": "NVIDIA Jetson Orin Nano",
+      "codename": "Orin Nano",
+      "architecture": "arm64 (aarch64)",
+      "processor": "6-core ARM Cortex-A78AE",
+      "cpuClock_GHz": 1.5,
+      "memory_GB": 8,
+      "memoryType": "LPDDR5",
+      "gpu": "Ampere (1024 CUDA cores, 32 Tensor Cores)",
+      "gpuClock_MHz": 625,
+      "gpuComputeCapability": "8.7",
+      "storage": "NVMe M.2",
+      "connectivity": ["Gigabit Ethernet", "USB 3.2", "MIPI CSI-2 (x2)"],
+      "powerModes": {
+        "7W": { "cpuCores": 4, "cpuClock_GHz": 1.0, "gpuClock_MHz": 320, "typicalPower_W": 7 },
+        "15W": { "cpuCores": 6, "cpuClock_GHz": 1.5, "gpuClock_MHz": 625, "typicalPower_W": 15 }
+      },
+      "thermalConstraints": {
+        "maxOperatingTemp_C": 55,
+        "passiveCooling": false,
+        "activeFanRequired": true,
+        "throttleTemp_C": 52,
+        "shutdownTemp_C": 60
+      },
+      "cudaVersion": "11.4",
+      "jetpackVersion": "5.1.2",
+      "dockerBaseImage": "nvcr.io/nvidia/l4t:r35.4.1",
+      "bestFor": "Edge AI inference, vision processing, robotics",
+      "limitations": "Good inference device. Not intended for training."
+    },
+    "jetson-orin-nx": {
+      "model": "NVIDIA Jetson Orin NX",
+      "codename": "Orin NX",
+      "architecture": "arm64 (aarch64)",
+      "processor": "8-core ARM Cortex-A78AE",
+      "cpuClock_GHz": 2.0,
+      "memory_GB": 16,
+      "memoryType": "LPDDR5",
+      "gpu": "Ampere (1024 CUDA cores, 32 Tensor Cores)",
+      "gpuClock_MHz": 918,
+      "gpuComputeCapability": "8.7",
+      "storage": "NVMe M.2",
+      "connectivity": ["Gigabit Ethernet", "USB 3.2", "MIPI CSI-2 (x3)"],
+      "powerModes": {
+        "10W": { "cpuCores": 4, "cpuClock_GHz": 1.2, "gpuClock_MHz": 408, "typicalPower_W": 10 },
+        "15W": { "cpuCores": 6, "cpuClock_GHz": 1.6, "gpuClock_MHz": 612, "typicalPower_W": 15 },
+        "25W": { "cpuCores": 8, "cpuClock_GHz": 2.0, "gpuClock_MHz": 918, "typicalPower_W": 25 }
+      },
+      "thermalConstraints": {
+        "maxOperatingTemp_C": 60,
+        "passiveCooling": false,
+        "activeFanRequired": true,
+        "throttleTemp_C": 57,
+        "shutdownTemp_C": 65
+      },
+      "cudaVersion": "11.4",
+      "jetpackVersion": "5.1.2",
+      "dockerBaseImage": "nvcr.io/nvidia/l4t:r35.4.1",
+      "bestFor": "Serious edge AI, multi-model inference, real-time vision",
+      "limitations": "Sweet spot for edge deployment. Sufficient for most inference workloads."
+    },
+    "jetson-agx-orin": {
+      "model": "NVIDIA Jetson AGX Orin",
+      "codename": "AGX Orin",
+      "architecture": "arm64 (aarch64)",
+      "processor": "12-core ARM Cortex-A78AE",
+      "cpuClock_GHz": 2.2,
+      "memory_GB": 64,
+      "memoryType": "LPDDR5",
+      "gpu": "Ampere (2048 CUDA cores, 64 Tensor Cores)",
+      "gpuClock_MHz": 1300,
+      "gpuComputeCapability": "8.7",
+      "storage": "NVMe M.2",
+      "connectivity": ["10 Gigabit Ethernet", "USB 3.2", "MIPI CSI-2 (x6)", "PCIe Gen 4"],
+      "powerModes": {
+        "15W": { "cpuCores": 6, "cpuClock_GHz": 1.2, "gpuClock_MHz": 520, "typicalPower_W": 15 },
+        "30W": { "cpuCores": 8, "cpuClock_GHz": 1.7, "gpuClock_MHz": 780, "typicalPower_W": 30 },
+        "50W": { "cpuCores": 10, "cpuClock_GHz": 2.0, "gpuClock_MHz": 1100, "typicalPower_W": 50 },
+        "60W": { "cpuCores": 12, "cpuClock_GHz": 2.2, "gpuClock_MHz": 1300, "typicalPower_W": 60 }
+      },
+      "thermalConstraints": {
+        "maxOperatingTemp_C": 65,
+        "passiveCooling": false,
+        "activeFanRequired": true,
+        "throttleTemp_C": 62,
+        "shutdownTemp_C": 70
+      },
+      "cudaVersion": "11.4",
+      "jetpackVersion": "5.1.2",
+      "dockerBaseImage": "nvcr.io/nvidia/l4t:r35.4.1",
+      "bestFor": "Maximum edge compute, multi-camera systems, autonomous systems, edge training",
+      "limitations": "Flagship Jetson. Can handle light training workloads. Requires robust power supply and cooling."
+    }
+  },
+  "deploymentNotes": {
+    "dockerBase": "Use nvcr.io/nvidia/l4t base images — they include GPU drivers and CUDA runtime",
+    "jetsonRuntime": "Requires nvidia-container-runtime for GPU access inside containers",
+    "crossCompilation": "Build on x86_64 with --platform linux/arm64 or use Jetson-native builds",
+    "storageWarning": "Jetson Nano uses microSD — consider wear leveling and avoid heavy write workloads",
+    "powerTip": "Start with lowest power mode and increase only as needed. Thermal throttling kills performance more than power limits."
+  }
+}

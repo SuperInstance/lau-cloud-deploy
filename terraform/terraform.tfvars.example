@@ -1,0 +1,10 @@
+# Terraform variables — define in terraform.tfvars or via environment
+# DO NOT commit terraform.tfvars with real values!
+
+compartment_ocid = "ocid1.compartment.oc1..CHANGE_ME"
+tenancy_ocid     = "ocid1.tenancy.oc1..CHANGE_ME"
+user_ocid        = "ocid1.user.oc1..CHANGE_ME"
+fingerprint      = "CHANGE_ME_FINGERPRINT"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "us-ashburn-1"
+ssh_public_key   = "ssh-rsa CHANGE_ME"

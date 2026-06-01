@@ -1,0 +1,24 @@
+# =============================================================================
+# Service — ClusterIP with optional LoadBalancer
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: lau-stack
+  namespace: lau-stack
+  labels:
+    app.kubernetes.io/name: lau-stack
+    app.kubernetes.io/component: server
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: lau-stack
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP

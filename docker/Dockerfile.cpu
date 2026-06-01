@@ -1,0 +1,119 @@
+# =============================================================================
+# Dockerfile.cpu — CPU-only build for Oracle Cloud free tier (ARM Ampere A1)
+# Target: arm64 / aarch64, no GPU
+# Optimized for OCI Always Free: 4 OCPU, 24GB RAM, ARM64
+# =============================================================================
+# Build: docker build -f docker/Dockerfile.cpu -t lau-stack:cpu-arm64 .
+# Run:   docker run -p 8080:8080 lau-stack:cpu-arm64
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: ARM64 build base
+# ---------------------------------------------------------------------------
+FROM --platform=linux/arm64 ubuntu:22.04 AS build-base
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    git \
+    wget \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------------------
+# Stage 2: Build C library (CPU-only, NEON optimized)
+# ---------------------------------------------------------------------------
+FROM build-base AS c-builder
+
+WORKDIR /build/c-lib
+COPY src/c/ ./
+RUN make clean && make -j$(nproc) \
+    CC=gcc \
+    CFLAGS="-O3 -march=armv8.2-a+crypto+simd -mtune=neoverse-n1 -Wall -Wextra" \
+    NO_CUDA=1
+
+# ---------------------------------------------------------------------------
+# Stage 3: Build Chapel runtime (CPU-only)
+# ---------------------------------------------------------------------------
+FROM build-base AS chapel-builder
+
+ENV CHPL_HOME=/opt/chapel
+ENV CHPL_RE2=bundled
+ENV CHPL_GMP=bundled
+ENV CHPL_LLVM=system
+ENV CHPL_TARGET_CPU=neoverse-n1
+ENV PATH="${CHPL_HOME}/bin/linux64-arm64:${PATH}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    llvm-dev \
+    libclang-dev \
+    libgmp3-dev \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG CHAPEL_VERSION=2.3.0
+RUN git clone --depth 1 --branch ${CHAPEL_VERSION} \
+    https://github.com/chapel-lang/chapel.git ${CHPL_HOME}
+
+WORKDIR ${CHPL_HOME}
+RUN make -j$(nproc) CHPL_TARGET_PLATFORM= CHPL_HOST_ARCH=arm64 && make install
+
+WORKDIR /build/chapel
+COPY src/chapel/ ./
+RUN chpl -O3 --fast --no-local-iterators-inline main.chpl -o /build/bin/chapel-app
+
+# ---------------------------------------------------------------------------
+# Stage 4: Build Go service (ARM64)
+# ---------------------------------------------------------------------------
+FROM --platform=linux/arm64 golang:1.22-bookworm AS go-builder
+
+WORKDIR /build
+COPY src/go/go.mod src/go/go.sum ./
+RUN go mod download
+
+COPY src/go/ ./
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=arm64 \
+    go build -ldflags="-s -w" -o /build/bin/lau-server ./cmd/server
+
+# ---------------------------------------------------------------------------
+# Stage 5: Production runtime (minimal)
+# ---------------------------------------------------------------------------
+FROM --platform=linux/arm64 ubuntu:22.04 AS runtime
+
+LABEL maintainer="SuperInstance"
+LABEL org.opencontainers.image.title="LAU Stack (CPU ARM64)"
+LABEL org.opencontainers.image.description="CPU-only LAU compute stack for Oracle Cloud ARM64 free tier"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libgomp1 \
+    libgmp10 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r lau && useradd -r -g lau -m -s /sbin/nologin lau
+
+COPY --from=c-builder /build/c-lib/libcompute.so /usr/local/lib/
+COPY --from=chapel-builder /build/bin/chapel-app /usr/local/bin/
+COPY --from=go-builder /build/bin/lau-server /usr/local/bin/
+
+RUN ldconfig
+
+COPY config/ /etc/lau/
+
+EXPOSE 8080 9090
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+USER lau
+WORKDIR /home/lau
+
+ENTRYPOINT ["/usr/local/bin/lau-server"]
+CMD ["--config", "/etc/lau/config.yaml", "--enable-cpu"]

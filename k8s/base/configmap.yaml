@@ -1,0 +1,59 @@
+# =============================================================================
+# ConfigMap — Hardware profiles injected into containers
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lau-hardware-profiles
+  namespace: lau-stack
+  labels:
+    app.kubernetes.io/name: lau-stack
+    app.kubernetes.io/component: config
+data:
+  # Target platform — one of: workstation, oracle-vm, oracle-bm, oracle-arm, jetson-nano, jetson-orin-nano, jetson-orin-nx, jetson-agx-orin
+  TARGET_PLATFORM: "workstation"
+
+  # Hardware profile JSON (inline for flexibility)
+  profiles.json: |
+    {
+      "workstation": {
+        "gpu": true,
+        "cudaArch": "sm_89",
+        "vramGB": 6,
+        "cpuThreads": 24,
+        "memoryGB": 32
+      },
+      "oracle-vm": {
+        "gpu": false,
+        "cpuThreads": 64,
+        "memoryGB": 1024
+      },
+      "oracle-bm": {
+        "gpu": false,
+        "cpuThreads": 128,
+        "memoryGB": 2048
+      },
+      "oracle-arm": {
+        "gpu": false,
+        "cpuThreads": 4,
+        "memoryGB": 24,
+        "architecture": "arm64"
+      },
+      "jetson-orin-nx": {
+        "gpu": true,
+        "cudaArch": "sm_87",
+        "vramGB": 16,
+        "cpuThreads": 8,
+        "memoryGB": 16,
+        "architecture": "arm64",
+        "powerMode": "25W"
+      }
+    }
+
+  # Service configuration
+  LAU_LOG_LEVEL: "info"
+  LAU_WORKER_THREADS: "0"   # 0 = auto-detect from CPU count
+  LAU_BATCH_SIZE: "1024"
+  LAU_ENABLE_CUDA: "auto"   # auto-detect, or true/false
+  LAU_METRICS_PORT: "9090"
+  LAU_API_PORT: "8080"

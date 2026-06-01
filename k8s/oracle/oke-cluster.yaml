@@ -1,0 +1,104 @@
+# =============================================================================
+# OKE Cluster Configuration — Oracle Cloud Kubernetes
+# Applied via OCI CLI or Terraform (see terraform/)
+# This is a reference manifest for the cluster configuration.
+# =============================================================================
+# NOTE: OKE clusters are created via OCI API/CLI/Terraform, not kubectl.
+# This file documents the intended cluster configuration.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oke-cluster-info
+  namespace: lau-stack
+  annotations:
+    documentation: "Reference configuration for OKE cluster provisioning"
+data:
+  cluster-config.yaml: |
+    # OKE Cluster Specification
+    cluster:
+      name: lau-stack-oke
+      kubernetesVersion: "1.29"
+      compartmentId: "ocid1.compartment.oc1..CHANGE_ME"
+      vcnId: "ocid1.vcn.oc1..CHANGE_ME"
+
+      # Network configuration
+      serviceLoadBalancerSubnetIds:
+        - "ocid1.subnet.oc1..CHANGE_ME_LB"
+      podsCidr: "10.244.0.0/16"
+      servicesCidr: "10.96.0.0/12"
+      serviceCidr: "10.96.0.0/12"
+
+      # Cluster level options
+      options:
+        addOns:
+          isKubernetesDashboardEnabled: false
+          isTillerEnabled: false
+        admissionControllerOptions:
+          isPodSecurityPolicyEnabled: false
+        kubernetesNetworkConfig:
+          podsCidr: "10.244.0.0/16"
+          servicesCidr: "10.96.0.0/12"
+
+      # Node pools
+      nodePools:
+        # Primary compute pool — BM.Standard.E4.128 (bare metal AMD)
+        - name: lau-compute-bm
+          shape: "BM.Standard.E4.128"
+          nodeShapeConfig:
+            ocpus: 128
+            memoryInGBs: 2048
+          nodeSourceDetails:
+            sourceType: "image"
+            imageId: "ocid1.image.oc1..CHANGE_ME"
+          size: 2
+          placementConfigs:
+            - availabilityDomain: "Uocm:PHX-AD-1"
+              capacityReservationId: null
+              faultDomain: []
+          nodePoolCyclingDetails:
+            isNodeCyclingEnabled: false
+          sshPublicKey: "ssh-rsa CHANGE_ME"
+          initialNodeLabels:
+            - key: "node-role"
+              value: "compute-bm"
+
+        # General purpose pool — VM.Standard.E4.Flex
+        - name: lau-general
+          shape: "VM.Standard.E4.Flex"
+          nodeShapeConfig:
+            ocpus: 8
+            memoryInGBs: 128
+          nodeSourceDetails:
+            sourceType: "image"
+            imageId: "ocid1.image.oc1..CHANGE_ME"
+          size: 3
+          placementConfigs:
+            - availabilityDomain: "Uocm:PHX-AD-1"
+          sshPublicKey: "ssh-rsa CHANGE_ME"
+          initialNodeLabels:
+            - key: "node-role"
+              value: "general"
+
+        # Free tier ARM pool — A1.Flex
+        - name: lau-arm-free
+          shape: "A1.Flex"
+          nodeShapeConfig:
+            ocpus: 4
+            memoryInGBs: 24
+          nodeSourceDetails:
+            sourceType: "image"
+            imageId: "ocid1.image.oc1..CHANGE_ME"
+          size: 1
+          placementConfigs:
+            - availabilityDomain: "Uocm:PHX-AD-1"
+          sshPublicKey: "ssh-rsa CHANGE_ME"
+          initialNodeLabels:
+            - key: "node-role"
+              value: "arm-free"
+
+    # OCI specific: Use BM.Standard.E4.128 node pool for heavy compute workloads.
+    # Use A1.Flex (ARM) for cost-optimized / free tier services.
+    # Pin workloads using nodeSelector:
+    #   nodeSelector:
+    #     node-role: compute-bm
